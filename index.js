@@ -15,26 +15,33 @@ exports.handler = async (event, context, callback) => {
   const parts = sanitizedKey.split("/");
   const resizedDirArr = parts.slice(1,parts.length);
   const resizedDir = resizedDirArr.join('/');
+  const originDir = `origins/${resizedDir}`; 
   console.log('resizedDir: '+resizedDir);
+  console.log('originDir: '+originDir);
+  
   try {
-    const image = await s3.getObject({ Bucket, Key: sanitizedKey }).promise();
+    const image = await s3.getObject({ Bucket, Key: originDir }).promise();
 
     await Promise.all(
       transforms.map(async item => {
         const resizedImg = await sharp(image.Body)
           .resize({ width: item.width })
           .toBuffer();
+        
+        console.log(`resized/${item.name}/${resizedDir}`);
         return await s3
           .putObject({
             Bucket,
             Body: resizedImg,
-            Key: `resized/${item.name}/${resizedDir}`
+            Key: `resized/${item.name}/${resizedDir}`,
           })
           .promise();
       })
     );
-    callback(null, `Success: ${filename}`);
+    callback(null, `Success: ${originDir}`);
   } catch (err) {
     callback(`Error resizing files: ${err}`);
+    console.log(err);
   }
+  console.log('successfully resized');
 };
