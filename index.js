@@ -26,6 +26,7 @@ exports.handler = async (event, context, callback) => {
       transforms.map(async item => {
         const resizedImg = await sharp(image.Body)
           .resize({ width: item.width })
+          .withMetadata()
           .toBuffer();
         
         console.log(`resized/${item.name}/${resizedDir}`);
